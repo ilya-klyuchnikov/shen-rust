@@ -1,6 +1,5 @@
 // [[file:../shen-rust.org::*Preamble][Preamble:1]]
-#![feature(slice_patterns)]
-#![feature(try_from)]
+
 #[macro_use]
 extern crate nom;
 extern crate uuid;
@@ -645,7 +644,7 @@ pub fn find_recursive_calls (function_name: String, num_args: usize, sexp: &KlTo
             let mut newly_found = Vec::new();
             let next = pending.pop().unwrap();
             if let (ref path, &KlToken::Cons(ref current)) = next {
-                if let &[KlToken::Symbol(ref s), ref rest..] = current.as_slice() {
+                if let &[KlToken::Symbol(ref s), ref rest @ ..] = current.as_slice() {
                     match (s.as_str(), rest) {
                         (name, rest) if (name == function_name.as_str()) && rest.len() == num_args => {
                             found.push(path.clone());
@@ -1012,7 +1011,7 @@ pub fn generate_cond(argument:bool, bound: Vec<String>, token:&KlToken) -> Vec<S
     let mut result : Vec<String> = Vec::new();
     if let &KlToken::Cons(ref klcond) = &*token {
         match klcond.as_slice() {
-            &[KlToken::Symbol(ref klcond), ref cases..] if klcond.as_str() == shen_rename_symbol(String::from("cond")) => {
+            &[KlToken::Symbol(ref klcond), ref cases @ ..] if klcond.as_str() == shen_rename_symbol(String::from("cond")) => {
                 let mut pairs = Vec::new();
                 let mut pair_list = Vec::new();
                 for pair_cons in cases {
@@ -1241,11 +1240,11 @@ pub fn generate_application(argument: bool, bound: Vec<String>, token: &KlToken)
     match &*token {
         &KlToken::Cons(ref application) => {
             match application.as_slice() {
-                &[ref app @ KlToken::Cons(_), ref rest..] => {
+                &[ref app @ KlToken::Cons(_), ref rest @ ..] => {
                     let args = rest.into_iter().map(| e | intersperse(generate(true, bound.clone(), e),String::from("\n"))).collect();
                     result = shen_apply_arguments_to_curried(argument, intersperse(generate(false, bound.clone(),app),String::from("\n")), args);
                 },
-                &[KlToken::Symbol(ref s), ref rest..] => {
+                &[KlToken::Symbol(ref s), ref rest @ ..] => {
                     let args = rest.into_iter().map(| e | intersperse(generate(true, bound.clone(), e),String::from("\n"))).collect();
                     if bound.contains(s) {
                         result = shen_apply_argument(
